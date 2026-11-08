@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e8efff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="StudyBuddy">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>StudyBuddy</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
@@ -123,9 +130,12 @@ details.bk>.in{padding-top:4px}
     <p id="gmsg" class="soon"></p></div>
    <div class="card glass"><h3>Görünüm</h3><div class="seg" id="thm"><button data-t="system">Sistem</button><button data-t="light">Açık</button><button data-t="dark">Koyu</button></div></div>
    <div class="card glass"><h3>Yedek</h3>
-    <p class="soon">Kitapların, çizimlerin, özetlerin ve quiz sonuçların tek bir zip dosyasında yedeklenir. Cihaz değiştirirsen ya da tarayıcı verilerini silersen geri yükleyebilirsin.</p>
-    <div class="row"><button class="b" id="bk">Yedeği indir</button><button class="b" id="rs">Yedeği yükle</button></div>
-    <p id="bkmsg" class="soon"></p><input type="file" id="rf" accept=".zip" hidden></div>
+    <p class="soon"><b>Hafif yedek:</b> çizimlerini, özetlerini ve quiz sonuçlarını küçük bir dosyaya alır. PDF’ler dahil değildir, bu yüzden cihazın belleğini zorlamaz. En güvenli yol budur.</p>
+    <div class="row"><button class="b p" id="bk">Hafif yedek al</button><button class="b" id="rs">Yedeği yükle</button></div>
+    <p class="soon"><b>Kitap yedeği:</b> bir kitabı PDF’iyle birlikte tek zip dosyasına koyar. Büyük kitaplarda cihazı zorlayabilir, bu yüzden her seferinde tek kitap yedeklenir.</p>
+    <div id="bklist"></div>
+    <p id="bkmsg" class="soon"></p><input type="file" id="rf" accept=".zip,.json" hidden>
+    <p id="ver" class="soon"></p></div>
   </section>
  </main>
 </div>
@@ -255,34 +265,65 @@ async function gem(parts,signal){
 }
 
 /* Ayarlar + yedek */
-function loadSet(){$('#gk').value=cfg().k;$('#gm').value=cfg().m;$('#gmsg').textContent=''}
+function loadSet(){$('#gk').value=cfg().k;$('#gm').value=cfg().m;$('#gmsg').textContent='';$('#bkmsg').textContent='';loadBk();$('#ver').textContent='Sürüm: '+VER}
 $('#gshow').onclick=()=>{const i=$('#gk');i.type=i.type==='password'?'text':'password';$('#gshow').textContent=i.type==='password'?'Göster':'Gizle'};
 $('#gsave').onclick=async()=>{
  ls('sb-key',$('#gk').value.trim());ls('sb-model',$('#gm').value.trim()||'gemini-2.5-flash');
  const m=$('#gmsg');m.textContent='Test ediliyor…';
  try{await gem([{text:'Sadece {"ok":true} JSON nesnesini döndür.'}]);m.textContent='Bağlantı çalışıyor. Model: '+cfg().m;$('#gm').value=cfg().m}catch(e){m.textContent=emsg(e)}
 };
-async function backup(){
- const m=$('#bkmsg');m.textContent='Yedek hazırlanıyor…';
+const VER='2026-11-08-d';
+const day=()=>new Date().toISOString().slice(0,10);
+function ready(b,n){
+ const m=$('#bkmsg');m.textContent='Hazır: '+n+' ';
+ const bt=document.createElement('button');bt.className='b p';bt.textContent='Kaydetmek için dokun';
+ bt.onclick=async()=>{
+  const f=new File([b],n,{type:b.type||'application/octet-stream'});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:n});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);
+ };
+ m.append(bt);
+}
+async function lightBackup(){
+ const m=$('#bkmsg');m.textContent='Hazırlanıyor…';
+ try{const books=await all('books'),inks=await all('ink');
+  ready(new Blob([JSON.stringify({v:2,light:true,books,ink:inks})],{type:'application/json'}),'studybuddy-hafif-yedek-'+day()+'.json')}
+ catch(e){m.textContent='Yedek alınamadı. Tekrar dene.'}
+}
+async function bookBackup(b){
+ const m=$('#bkmsg');m.textContent='“'+b.title+'” hazırlanıyor… Bu biraz sürebilir, sayfadan çıkma.';
  try{
-  const z=new JSZip(),books=await all('books'),inks=await all('ink');
-  z.file('data.json',JSON.stringify({v:1,books,ink:inks}));
-  for(const b of books){const f=await get('files',b.id);if(f)z.file('pdf/'+b.id+'.pdf',f.data)}
-  const blob=await z.generateAsync({type:'blob',compression:'STORE'}),u=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=u;a.download='studybuddy-yedek-'+new Date().toISOString().slice(0,10)+'.zip';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);
-  m.textContent='Yedek hazır.';
- }catch(e){m.textContent='Yedek alınamadı. Tekrar dene.'}
+  const z=new JSZip(),f=await get('files',b.id),ik=await get('ink',b.id);
+  z.file('data.json',JSON.stringify({v:1,books:[b],ink:ik?[ik]:[]}));z.file('pdf/'+b.id+'.pdf',f.data);f.data=null;
+  ready(await z.generateAsync({type:'blob',compression:'STORE'}),'studybuddy-kitap-'+day()+'.zip');
+ }catch(e){m.textContent='Bu kitap yedeklenemedi, bellek yetmemiş olabilir. Hafif yedeği dene. '+((e&&e.message)||'')}
+}
+async function loadBk(){
+ const el=$('#bklist');el.innerHTML='';
+ (await all('books')).sort((a,b)=>byTr(a.title,b.title)).forEach(b=>{
+  const r=document.createElement('div');r.className='row';r.style.justifyContent='space-between';r.style.alignItems='center';
+  r.innerHTML='<span class="soon"></span><button class="b">Yedekle</button>';r.firstChild.textContent=b.title;r.lastChild.onclick=()=>bookBackup(b);el.append(r)});
 }
 async function restore(f){
  const m=$('#bkmsg');m.textContent='Yedek yükleniyor…';
  try{
+  if(/\.json$/i.test(f.name)){
+   const d=JSON.parse(await f.text()),cur=await all('books');let ok=0,no=0;
+   for(const b of d.books||[]){
+    const t=cur.find(x=>x.id===b.id)||cur.find(x=>x.title===b.title&&x.pages===b.pages);
+    if(!t){no++;continue}
+    if(b.sum)t.sum=b.sum;if(b.quiz)t.quiz=b.quiz;await put('books',t);
+    const k=(d.ink||[]).find(x=>x.id===b.id);if(k)await put('ink',{id:t.id,pages:k.pages});ok++;
+   }
+   m.textContent=ok+' kitabın çizim ve özetleri geri yüklendi.'+(no?' '+no+' kitap için aynı PDF bulunamadı. Önce o PDF’i kütüphaneye ekle, sonra yedeği tekrar yükle.':'');renderLib();return;
+  }
   const z=await JSZip.loadAsync(f),d=JSON.parse(await z.file('data.json').async('string'));let n=0;
   for(const b of d.books){const p=z.file('pdf/'+b.id+'.pdf');if(!p)continue;await put('files',{id:b.id,data:await p.async('arraybuffer')});await put('books',b);n++}
   for(const k of d.ink||[])await put('ink',k);
   m.textContent=n+' kitap geri yüklendi.';renderLib();
  }catch(e){m.textContent='Bu yedek dosyası okunamadı.'}
 }
-$('#bk').onclick=backup;$('#rs').onclick=()=>$('#rf').click();
+$('#bk').onclick=lightBackup;$('#rs').onclick=()=>$('#rf').click();
 $('#rf').onchange=()=>{const f=$('#rf').files[0];$('#rf').value='';if(f)restore(f)};
 
 /* Özet çıkarma */
