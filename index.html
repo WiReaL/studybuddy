@@ -209,7 +209,7 @@ const cfg=()=>({k:ls('sb-key')||'',m:ls('sb-model')||'gemini-2.5-flash'});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const b64=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result.split(',')[1]);f.readAsDataURL(b)});
 const EM={nokey:'Önce Ayarlar bölümünden Gemini anahtarını gir.',key:'Gemini anahtarı geçersiz ya da izin yok. Ayarlar’dan kontrol et.',rate:'Gemini kullanım sınırına gelindi. Biraz bekleyip tekrar dene.',json:'Cevap okunamadı, tekrar dene.',http:'Gemini’ye ulaşılamadı. Model adını kontrol et.'};
-const emsg=e=>e&&e.name==='AbortError'?'':(EM[e&&e.code]||'Bir hata oldu. İnternetini kontrol edip tekrar dene.');
+const emsg=e=>e&&e.name==='AbortError'?'':(EM[e&&e.code]||'Bir hata oldu. İnternetini kontrol edip tekrar dene.')+(e&&e.status?' [HTTP '+e.status+(e.detail?': '+e.detail:'')+']':(e&&e.message&&!e.code?' ['+e.message+']':''));
 async function fixModel(k){
  const r=await fetch(GM+'models?pageSize=100',{headers:{'x-goog-api-key':k}});if(!r.ok)return;
  const c=((await r.json()).models||[]).filter(x=>(x.supportedGenerationMethods||[]).includes('generateContent')&&/flash/.test(x.name)&&!/lite|image|tts|live|audio|thinking|exp|preview/.test(x.name)).map(x=>x.name.replace('models/','')).sort().reverse();
@@ -222,7 +222,8 @@ async function gem(parts,signal){
   if(r.ok){const j=await r.json(),t=((j.candidates||[])[0]?.content?.parts||[]).map(p=>p.text||'').join('');try{return JSON.parse(t.replace(/```json|```/g,'').trim())}catch(e){throw{code:'json'}}}
   if(r.status===429&&a<3){await sleep(20000);continue}
   if(r.status===404&&a<1){await fixModel(k);continue}
-  throw{code:(r.status===400||r.status===403||r.status===401)?'key':r.status===429?'rate':'http'};
+  let d='';try{d=((await r.json()).error||{}).message||''}catch(e){}
+  throw{code:(r.status===400||r.status===403||r.status===401)?'key':r.status===429?'rate':'http',status:r.status,detail:d};
  }
 }
 
