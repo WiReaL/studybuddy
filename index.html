@@ -194,13 +194,13 @@ $('#f').onchange=()=>{const f=$('#f').files[0];if(f&&!$('#t').value)$('#t').valu
 $('#ok').onclick=async()=>{
  const f=$('#f').files[0],m=$('#msg');
  if(!f){m.textContent='Önce bir PDF dosyası seç.';return}
- m.textContent='Ekleniyor…';
+ m.textContent='Ekleniyor…';let st='dosya okunuyor';
  try{
-  const buf=await f.arrayBuffer(),doc=await pdfjsLib.getDocument({data:buf.slice(0)}).promise,id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const buf=await f.arrayBuffer();st='PDF açılıyor';const doc=await pdfjsLib.getDocument({data:buf.slice(0)}).promise,id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);st='cihaza kaydediliyor';
   await put('files',{id,data:buf});
   await put('books',{id,title:$('#t').value.trim()||f.name,course:$('#c').value.trim()||'Genel',pages:doc.numPages,last:1});
   $('#dlg').close();renderLib();
- }catch(e){m.textContent='Bu dosya eklenemedi. Başka bir PDF dene.'}
+ }catch(e){m.textContent='Eklenemedi. Adım: '+st+'. Dosya boyutu: '+Math.round(f.size/1048576)+' MB. Hata: '+((e&&e.name)||'')+((e&&e.message)?' - '+e.message:'')}
 };
 
 /* Gemini */
