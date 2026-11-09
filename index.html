@@ -138,6 +138,8 @@ details.rv>summary{padding:10px 0;font-weight:600;font-size:15px;color:var(--ac)
 @media (max-width:760px){#side{border-right:0;border-top:1px solid var(--gb);padding:4px}main{padding:16px 14px 20px}}
 .act.sec{background:var(--ph);color:var(--tx);margin-top:6px}
 #stage{padding-bottom:30px;touch-action:pan-x pan-y}
+details.un>summary{padding:11px 14px;margin-top:8px;border:1px solid var(--gb);border-radius:12px;font-weight:600;font-size:15px}
+details.un>.in{padding-top:2px}
 </style>
 </head>
 <body>
@@ -322,7 +324,7 @@ $('#gsave').onclick=async()=>{
  const m=$('#gmsg');m.textContent='Test ediliyor…';
  try{await gem([{text:'Sadece {"ok":true} JSON nesnesini döndür.'}]);m.textContent='Bağlantı çalışıyor. Model: '+cfg().m;$('#gm').value=cfg().m}catch(e){m.textContent=emsg(e)}
 };
-const VER='2026-11-09-g';
+const VER='2026-11-09-h';
 const day=()=>new Date().toISOString().slice(0,10);
 function ready(b,n){
  const m=$('#bkmsg');m.textContent='Dosya hazır: '+n+' ';
@@ -383,8 +385,8 @@ $('#rf').onchange=()=>{const f=$('#rf').files[0];$('#rf').value='';if(f)restore(
 
 /* Özet çıkarma */
 const PROMPT=`Aşağıda bir ders kitabının birkaç sayfasından alınan metin var. Her sayfa [Sayfa N] ile başlıyor.
-Görevin: Metinde konu anlatımı veya bilgi veren bölümler varsa, her konu için öğrenciye yönelik kısa bir özet çıkar. Sadece soru, test veya alıştırma olan kısımları atla. "page" değeri, konunun başladığı sayfanın numarası olsun. Özet çok kısa ve öz olsun: en fazla 2 kısa cümle (30 kelimeyi geçmesin), sadece en önemli kavram, tanım veya kuralı yaz. Giriş cümlesi, süslü anlatım ve tekrar kullanma. Sade Türkçe yaz, kitapta olmayan bilgi ekleme.
-Sadece geçerli bir JSON dizisi döndür, başka hiçbir şey yazma. Biçim: [{"topic":"Konu başlığı","summary":"Özet metni","page":12}]
+Görevin: Metinde konu anlatımı veya bilgi veren bölümler varsa, her konu için öğrenciye yönelik kısa bir özet çıkar. Sadece soru, test veya alıştırma olan kısımları atla. "page" değeri, konunun başladığı sayfanın numarası olsun. Özet çok kısa ve öz olsun: en fazla 2 kısa cümle (30 kelimeyi geçmesin), sadece en önemli kavram, tanım veya kuralı yaz. Giriş cümlesi, süslü anlatım ve tekrar kullanma. Sade Türkçe yaz, kitapta olmayan bilgi ekleme. Her konunun hangi üniteye (bölüme) ait olduğunu "unit" alanına, kitapta yazdığı şekliyle kısa yaz (örnek: "1. Ünite: Kuvvet ve Hareket"). Üniteyi sayfalardaki başlıklardan anla; başlık yoksa ünite bilgisini boş bırakma, önceki ünite bilgisini kullan.
+Sadece geçerli bir JSON dizisi döndür, başka hiçbir şey yazma. Biçim: [{"topic":"Konu başlığı","unit":"Ünite adı","summary":"Özet metni","page":12}]
 Konu anlatımı yoksa [] döndür.
 
 METİN:`;
@@ -398,6 +400,18 @@ function dt(key,def,cls,head,sub){
  d.ontoggle=()=>{OP[key]=d.open;ls('sb-open',JSON.stringify(OP))};
  return d;
 }
+const NOUNIT='Ünite belirtilmemiş';
+function topicEl(b,s){
+ const d=document.createElement('div');d.className='topic';d.innerHTML='<h3></h3><p></p><button class="lnk"></button>';
+ d.querySelector('h3').textContent=s.topic;d.querySelector('p').textContent=s.summary;
+ const bt=d.querySelector('button');bt.textContent='Kitapta göster (sayfa '+s.page+')';bt.onclick=()=>openBook(b.id,s.page);return d;
+}
+function unitsOf(b){
+ const m=new Map();
+ b.sum.slice().sort((x,y)=>x.page-y.page).forEach(s=>{const u=(s.unit||'').trim()||NOUNIT;if(!m.has(u))m.set(u,[]);m.get(u).push(s)});
+ if(m.has(NOUNIT)&&m.size>1){const v=m.get(NOUNIT);m.delete(NOUNIT);m.set(NOUNIT,v)}
+ return m;
+}
 async function renderSum(){
  const books=(await all('books')).filter(b=>b.sum&&b.sum.length),el=$('#sumlist');el.innerHTML='';
  if(!books.length){el.innerHTML='<p class="empty">Henüz özet yok. Kütüphanede bir kitabın altındaki “Özet çıkar” düğmesine bas.</p>';return}
@@ -409,12 +423,11 @@ async function renderSum(){
  Object.keys(g).sort(byTr).forEach(c=>{
   const n=g[c].reduce((a,b)=>a+b.sum.length,0),cd=dt('c:'+c,false,'cs glass',c,n+' konu'+(g[c].length>1?' · '+g[c].length+' kitap':''));
   g[c].forEach(b=>{
-   const bd=dt('b:'+b.id,g[c].length===1,'bk',b.title,b.sum.length+' konu');
-   b.sum.slice().sort((x,y)=>x.page-y.page).forEach(s=>{
-    const d=document.createElement('div');d.className='topic';d.innerHTML='<h3></h3><p></p><button class="lnk"></button>';
-    d.querySelector('h3').textContent=s.topic;d.querySelector('p').textContent=s.summary;
-    const bt=d.querySelector('button');bt.textContent='Kitapta göster (sayfa '+s.page+')';bt.onclick=()=>openBook(b.id,s.page);
-    bd.querySelector('.in').append(d)});
+   const bd=dt('b:'+b.id,g[c].length===1,'bk',b.title,b.sum.length+' konu'),box=bd.querySelector('.in'),us=unitsOf(b);
+   if(us.size===1&&us.has(NOUNIT)){
+    const p=document.createElement('p');p.className='soon';p.textContent='Bu kitabın özetleri üniteye ayrılmamış. “Özeti yenile” ile üniteli hâlini çıkarabilirsin.';box.append(p);
+    us.get(NOUNIT).forEach(s=>box.append(topicEl(b,s)));
+   }else us.forEach((arr,u)=>{const ud=dt('u:'+b.id+':'+u,us.size===1,'un',u,arr.length+' konu');arr.forEach(s=>ud.querySelector('.in').append(topicEl(b,s)));box.append(ud)});
    cd.querySelector('.in').append(bd)});
   el.append(cd)});
 }
@@ -426,6 +439,7 @@ async function summarize(id){
  if(!rg)return;
  const from=Math.max(1,Math.min(rg[0]||1,doc.numPages)),to=Math.max(from,Math.min(rg[1]||doc.numPages,doc.numPages));
  let ctl=null,stop=false,out=(meta.sum||[]).filter(x=>x.page<from||x.page>to),msg='';
+ let lastUnit=((out.filter(x=>x.page<from&&x.unit).sort((a,b)=>b.page-a.page)[0])||{}).unit||'';
  $('#pcancel').onclick=()=>{stop=true;if(ctl)ctl.abort()};$('#prog').oncancel=e=>e.preventDefault();
  tx.textContent='Başlıyor…';dlg.showModal();
  try{
@@ -434,14 +448,14 @@ async function summarize(id){
    for(let n=from;n<=pe;n++){const c=await(await doc.getPage(n)).getTextContent();pt+=c.items.map(i=>i.str).join('').length}
    if(pt<60*(pe-from+1)){IMG=true;STEP=4}}
   for(let s=from;s<=to&&!stop;s+=STEP){
-   const e=Math.min(s+STEP-1,to);let parts;
+   const e=Math.min(s+STEP-1,to);let parts;const H=lastUnit?'Önceki sayfalarda devam eden ünite: "'+lastUnit+'". Bu sayfalarda yeni bir ünite başlığı yoksa bu üniteyi kullan.\n':'';
    tx.textContent='Sayfa '+s+'–'+e+' işleniyor (toplam '+doc.numPages+' sayfa)…';
-   if(IMG){parts=[{text:PROMPT_IMG(s,e)}];for(let n=s;n<=e;n++)parts.push({inline_data:{mime_type:'image/jpeg',data:await b64(await pageBlob(doc,n))}})}
+   if(IMG){parts=[{text:H+PROMPT_IMG(s,e)}];for(let n=s;n<=e;n++)parts.push({inline_data:{mime_type:'image/jpeg',data:await b64(await pageBlob(doc,n))}})}
    else{let text='';for(let n=s;n<=e;n++){const c=await(await doc.getPage(n)).getTextContent();text+='\n[Sayfa '+n+']\n'+c.items.map(i=>i.str).join(' ').replace(/\s+/g,' ').trim()}
-    if(text.replace(/\[Sayfa \d+\]/g,'').trim().length<300)continue;parts=[{text:PROMPT+text.slice(0,24000)}]}
+    if(text.replace(/\[Sayfa \d+\]/g,'').trim().length<300)continue;parts=[{text:H+PROMPT+text.slice(0,24000)}]}
    ctl=new AbortController();
    let r;try{r=await gem(parts,ctl.signal)}catch(er){if(er&&er.code==='json')continue;throw er}
-   (Array.isArray(r)?r:[]).forEach(x=>{if(x&&x.topic&&x.summary){const p=Math.round(+x.page);out.push({topic:String(x.topic),summary:String(x.summary),page:p>=s&&p<=e?p:s})}});
+   (Array.isArray(r)?r:[]).forEach(x=>{if(x&&x.topic&&x.summary){const p=Math.round(+x.page);const u=String(x.unit||'').trim();if(u)lastUnit=u;out.push({topic:String(x.topic),unit:u,summary:String(x.summary),page:p>=s&&p<=e?p:s})}});
    if(out.length){meta.sum=out.slice();await put('books',meta)}
   }
  }catch(e){msg=emsg(e)}
@@ -474,14 +488,20 @@ async function renderQuiz(){
  el.innerHTML='<div class="card glass"><label>Kitap<select id="qb"></select></label><label>Konular</label><div id="qt"></div><label>Soru sayısı<select id="qn"><option>5</option><option>10</option></select></label><div class="row"><button class="b p" id="qgo">Quiz başlat</button></div><p id="qmsg" class="soon"></p></div><div id="qhist"></div>';
  const sel=$('#qb');books.forEach(b=>{const o=document.createElement('option');o.value=b.id;o.textContent=b.course+' · '+b.title;sel.append(o)});
  const fill=()=>{const b=books.find(x=>x.id===sel.value);$('#qt').innerHTML='';
-  b.sum.slice().sort((x,y)=>x.page-y.page).forEach(s=>{const l=document.createElement('label');l.className='chk';l.innerHTML='<input type="checkbox" checked><span></span>';l.firstChild.dataset.k=b.sum.indexOf(s);l.querySelector('span').textContent=s.topic;$('#qt').append(l)});
+  const us=unitsOf(b),plain=us.size===1&&us.has(NOUNIT);
+  us.forEach((arr,u)=>{
+   const kids=[];let uh=null;
+   if(!plain){uh=document.createElement('label');uh.className='chk';uh.innerHTML='<input type="checkbox" checked class="ucb"><b></b>';uh.querySelector('b').textContent=u;$('#qt').append(uh)}
+   arr.forEach(s=>{const l=document.createElement('label');l.className='chk';if(!plain)l.style.marginLeft='26px';l.innerHTML='<input type="checkbox" checked><span></span>';l.firstChild.dataset.k=b.sum.indexOf(s);l.querySelector('span').textContent=s.topic;$('#qt').append(l);kids.push(l.firstChild)});
+   if(uh)uh.firstChild.onchange=()=>kids.forEach(k=>k.checked=uh.firstChild.checked);
+  });
   const h=(b.quiz||[]).slice(-3).reverse();$('#qhist').innerHTML=h.length?'<h2>Son sonuçların</h2>':'';
   h.forEach(r=>$('#qhist').append(rvBlock(new Date(r.d).toLocaleDateString('tr-TR')+': '+r.s+' / '+r.n,r.items)))};
  sel.onchange=fill;fill();
  $('#qgo').onclick=()=>startQuiz(books.find(x=>x.id===sel.value),+$('#qn').value);
 }
 async function startQuiz(b,n){
- const tops=$$('#qt input:checked').map(i=>b.sum[+i.dataset.k]),m=$('#qmsg');
+ const tops=$$('#qt input:checked:not(.ucb)').map(i=>b.sum[+i.dataset.k]),m=$('#qmsg');
  if(!tops.length){m.textContent='En az bir konu seç.';return}
  if(!cfg().k){m.textContent=EM.nokey;return}
  m.textContent='Sorular hazırlanıyor…';$('#qgo').disabled=true;
