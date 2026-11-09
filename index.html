@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#e8efff">
+<meta name="theme-color" content="#f7f7f8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="StudyBuddy">
@@ -104,6 +104,38 @@ details.bk>.in{padding-top:4px}
 .in .topic{background:var(--ph);margin:8px 0;padding:14px 16px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));max-width:min(520px,92vw);padding:12px 16px;border-radius:18px;z-index:99;font-size:14px}
 #toast[hidden]{display:none}
+
+/* StudyBuddy 2.0 tasarım sistemi: sade, düz, tablet öncelikli */
+:root{--tx:#18181b;--mu:#6b6b76;--ac:#3f5fe0;--on:#fff;--g:#fff;--gb:#e4e4e9;--sh:none;--ph:#f1f1f4;--bb:#f7f7f8;--dk:#e9e9ee}
+:root[data-t="dark"]{--tx:#ececf0;--mu:#9b9ba6;--ac:#8197ff;--on:#0f0f12;--g:#18181c;--gb:#2b2b32;--sh:none;--ph:#222228;--bb:#101013;--dk:#09090b}
+body{background:var(--bb)}
+.glass{-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+dialog{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--g);box-shadow:0 12px 40px rgba(0,0,0,.25);border-radius:18px}
+dialog::backdrop{-webkit-backdrop-filter:none;backdrop-filter:none}
+h1{font-size:26px;font-weight:650;letter-spacing:-.02em}
+.b{border-radius:10px;min-height:44px;padding:10px 16px}
+.cover{background:hsl(var(--h) 34% 44%);border-radius:5px 9px 9px 5px;box-shadow:inset 8px 0 0 rgba(0,0,0,.18)}
+.cover::after{display:none}
+.book:hover .cover{transform:none}
+.act{border-radius:10px;min-height:40px}
+#app{padding:0;gap:0}
+#side{width:232px;border-radius:0;border:0;border-right:1px solid var(--gb);padding:20px 12px}
+#side button{border-radius:10px;min-height:44px}
+main{padding:28px 36px 60px}
+.card,.topic,details.cs{border-radius:14px;box-shadow:none}
+#bar,#tb{border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+#pop{border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.tl{min-height:44px;border-radius:10px}
+.sw{width:36px;height:36px}
+input[type=range]{height:32px}
+.seg{border-radius:10px}
+.seg button{border-radius:8px;min-height:40px}
+.opt{border-radius:12px;min-height:48px}
+#sv{font-size:13px;color:var(--mu);white-space:nowrap;border:0;background:none;padding:4px 8px;min-height:0}
+#sv[data-k="2"]{color:#dc2626;font-weight:600}
+details.rv>summary{padding:10px 0;font-weight:600;font-size:15px;color:var(--ac)}
+@media (max-width:900px) and (min-width:761px){#side{width:78px;padding:14px 6px}#side .logo{display:none}#side button{flex-direction:column;gap:4px;font-size:11px;padding:10px 4px;align-items:center;justify-content:center}}
+@media (max-width:760px){#side{border-right:0;border-top:1px solid var(--gb);padding:4px}main{padding:16px 14px 20px}}
 </style>
 </head>
 <body>
@@ -135,20 +167,20 @@ details.bk>.in{padding-top:4px}
     <p class="soon"><b>Kitap yedeği:</b> bir kitabı PDF’iyle birlikte tek zip dosyasına koyar. Büyük kitaplarda cihazı zorlayabilir, bu yüzden her seferinde tek kitap yedeklenir.</p>
     <div id="bklist"></div>
     <p id="bkmsg" class="soon"></p><input type="file" id="rf" accept=".zip,.json" hidden>
-    <p id="ver" class="soon"></p></div>
+    <p class="soon">Verilerin bu cihazın tarayıcısında, yerel olarak saklanır. Buluta yüklenmez. Özet ve quiz sırasında yalnızca seçtiğin sayfalar Gemini’ye gönderilir.</p><p id="stor" class="soon"></p><p id="lastbk" class="soon"></p><p id="ver" class="soon"></p></div>
   </section>
  </main>
 </div>
 
 <div id="reader">
  <div id="bar" class="glass">
-  <button class="b" id="back">‹ Kütüphane</button><span id="rtitle"></span><span class="sp"></span>
+  <button class="b" id="back">‹ Kütüphane</button><span id="rtitle"></span><button id="sv" aria-live="polite"></button><span class="sp"></span>
   <button class="b" id="prev">‹</button><span id="pg"></span><button class="b" id="next">›</button>
-  <button class="b" id="zo">−</button><button class="b" id="zi">+</button><button class="b" id="rth">◐</button>
+  <button class="b" id="zo" aria-label="Uzaklaştır">−</button><button class="b" id="zi" aria-label="Yakınlaştır">+</button><button class="b" id="fw" title="Genişliğe sığdır">Genişlik</button><button class="b" id="fp" title="Sayfaya sığdır">Sayfa</button><button class="b" id="rth">◐</button>
  </div>
  <div id="stage"><div id="wrap"><canvas id="pdfc"></canvas><canvas id="hlc"></canvas><canvas id="inkc"></canvas><canvas id="livec"></canvas></div></div>
  <div id="pop" class="glass" hidden></div>
- <div id="tb" class="glass"><div id="tools"></div><span class="sep"></span><button class="b" id="undo" title="Geri al">↶</button><button class="b" id="redo" title="İleri al">↷</button><span class="sep"></span><button class="b on" id="mode">Çizim</button></div>
+ <div id="tb" class="glass"><div id="tools"></div><span class="sep"></span><button class="b" id="undo" title="Geri al">↶</button><button class="b" id="redo" title="İleri al">↷</button><span class="sep"></span><button class="b on" id="fg" title="Parmakla çizim">Parmak</button><button class="b on" id="mode">Çizim</button></div>
 </div>
 
 <dialog id="dlg">
@@ -274,25 +306,31 @@ async function gem(parts,signal){
 }
 
 /* Ayarlar + yedek */
-function loadSet(){$('#gk').value=cfg().k;$('#gm').value=cfg().m;$('#gmsg').textContent='';$('#bkmsg').textContent='';loadBk();$('#ver').textContent='Sürüm: '+VER}
+async function loadSet(){
+ $('#gk').value=cfg().k;$('#gm').value=cfg().m;$('#gmsg').textContent='';$('#bkmsg').textContent='';loadBk();lastBk();$('#ver').textContent='Sürüm: '+VER;
+ try{const e=await navigator.storage.estimate(),p=await navigator.storage.persisted();$('#stor').textContent='Kullanılan alan: '+Math.round(e.usage/1048576)+' MB. Kalıcı saklama: '+(p?'açık.':'kapalı, tarayıcı alan darlığında verileri silebilir. Düzenli yedek al.')}catch(e){}
+}
 $('#gshow').onclick=()=>{const i=$('#gk');i.type=i.type==='password'?'text':'password';$('#gshow').textContent=i.type==='password'?'Göster':'Gizle'};
 $('#gsave').onclick=async()=>{
  ls('sb-key',$('#gk').value.trim());ls('sb-model',$('#gm').value.trim()||'gemini-2.5-flash');
  const m=$('#gmsg');m.textContent='Test ediliyor…';
  try{await gem([{text:'Sadece {"ok":true} JSON nesnesini döndür.'}]);m.textContent='Bağlantı çalışıyor. Model: '+cfg().m;$('#gm').value=cfg().m}catch(e){m.textContent=emsg(e)}
 };
-const VER='2026-11-08-e';
+const VER='2026-11-08-f';
 const day=()=>new Date().toISOString().slice(0,10);
 function ready(b,n){
- const m=$('#bkmsg');m.textContent='Hazır: '+n+' ';
+ const m=$('#bkmsg');m.textContent='Dosya hazır: '+n+' ';
  const bt=document.createElement('button');bt.className='b p';bt.textContent='Kaydetmek için dokun';
  bt.onclick=async()=>{
   const f=new File([b],n,{type:b.type||'application/octet-stream'});
-  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:n});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:n});ls('sb-lastbk',new Date().toLocaleString('tr-TR'));m.textContent='Paylaşım tamamlandı. Dosyanın seçtiğin yerde durduğunu kontrol et.';lastBk();return}}
+  catch(e){if(e&&e.name==='AbortError'){m.textContent='Kaydetme iptal edildi, yedek alınmadı.';return}}
   const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=n;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);
+  m.textContent='İndirme başlatıldı. Dosyayı İndirilenler klasöründe görene kadar yedeği tamamlanmış sayma.';
  };
  m.append(bt);
 }
+const lastBk=()=>{const e=$('#lastbk');if(e)e.textContent=ls('sb-lastbk')?'Son yedek: '+ls('sb-lastbk'):'Henüz yedek alınmadı.'};
 async function lightBackup(){
  const m=$('#bkmsg');m.textContent='Hazırlanıyor…';
  try{const books=await all('books'),inks=await all('ink');
@@ -313,24 +351,27 @@ async function loadBk(){
   const r=document.createElement('div');r.className='row';r.style.justifyContent='space-between';r.style.alignItems='center';
   r.innerHTML='<span class="soon"></span><button class="b">Yedekle</button>';r.firstChild.textContent=b.title;r.lastChild.onclick=()=>bookBackup(b);el.append(r)});
 }
+function okBk(d){return !!d&&Array.isArray(d.books)&&d.books.every(b=>b&&typeof b.id==='string'&&typeof b.title==='string'&&Number.isFinite(b.pages))&&(!d.ink||Array.isArray(d.ink))&&(!d.v||d.v<=2)}
 async function restore(f){
- const m=$('#bkmsg');m.textContent='Yedek yükleniyor…';
+ const m=$('#bkmsg');m.textContent='Yedek kontrol ediliyor…';
  try{
-  if(/\.json$/i.test(f.name)){
-   const d=JSON.parse(await f.text()),cur=await all('books');let ok=0,no=0;
-   for(const b of d.books||[]){
-    const t=cur.find(x=>x.id===b.id)||cur.find(x=>x.title===b.title&&x.pages===b.pages);
-    if(!t){no++;continue}
-    if(b.sum)t.sum=b.sum;if(b.quiz)t.quiz=b.quiz;await put('books',t);
-    const k=(d.ink||[]).find(x=>x.id===b.id);if(k)await put('ink',{id:t.id,pages:k.pages});ok++;
-   }
-   m.textContent=ok+' kitabın çizim ve özetleri geri yüklendi.'+(no?' '+no+' kitap için aynı PDF bulunamadı. Önce o PDF’i kütüphaneye ekle, sonra yedeği tekrar yükle.':'');renderLib();return;
+  const cur=await all('books'),light=/\.json$/i.test(f.name);let z=null,d;
+  if(light)d=JSON.parse(await f.text());else{z=await JSZip.loadAsync(f);d=JSON.parse(await z.file('data.json').async('string'))}
+  if(!okBk(d)){m.textContent='Bu dosya geçerli bir StudyBuddy yedeği değil. Hiçbir şey değişmedi.';return}
+  const match=b=>cur.find(x=>x.id===b.id)||(light?cur.find(x=>x.title===b.title&&x.pages===b.pages):null);
+  const items=d.books.filter(b=>light||z.file('pdf/'+b.id+'.pdf')),hit=items.filter(match).length;
+  if(!items.length){m.textContent='Bu yedekte geri yüklenecek kitap bulunamadı. Hiçbir şey değişmedi.';return}
+  if(hit&&!confirm(hit+' kitabın çizim ve özetleri yedektekilerle değiştirilecek. Devam edilsin mi?')){m.textContent='İptal edildi. Hiçbir şey değişmedi.';return}
+  m.textContent='Yedek yükleniyor…';let n=0,no=0;
+  for(const b of items){
+   const k=(d.ink||[]).find(x=>x.id===b.id);
+   if(light){const t=match(b);if(!t){no++;continue}
+    if(b.sum)t.sum=b.sum;if(b.quiz)t.quiz=b.quiz;await put('books',t);if(k)await put('ink',{id:t.id,pages:k.pages})}
+   else{await put('files',{id:b.id,data:await z.file('pdf/'+b.id+'.pdf').async('blob')});await put('books',b);if(k)await put('ink',k)}
+   n++;
   }
-  const z=await JSZip.loadAsync(f),d=JSON.parse(await z.file('data.json').async('string'));let n=0;
-  for(const b of d.books){const p=z.file('pdf/'+b.id+'.pdf');if(!p)continue;await put('files',{id:b.id,data:await p.async('blob')});await put('books',b);n++}
-  for(const k of d.ink||[])await put('ink',k);
-  m.textContent=n+' kitap geri yüklendi.';renderLib();
- }catch(e){m.textContent='Bu yedek dosyası okunamadı.'}
+  m.textContent=n+' kitap geri yüklendi.'+(no?' '+no+' kitap için aynı PDF kütüphanede yok, önce o PDF’i ekleyip yedeği tekrar yükle.':'');renderLib();
+ }catch(e){m.textContent='Yedek okunamadı: '+((e&&e.message)||'bozuk dosya')+'. Hiçbir şey silinmedi.'}
 }
 $('#bk').onclick=lightBackup;$('#rs').onclick=()=>$('#rf').click();
 $('#rf').onchange=()=>{const f=$('#rf').files[0];$('#rf').value='';if(f)restore(f)};
@@ -414,6 +455,12 @@ Sadece geçerli bir JSON dizisi döndür, başka hiçbir şey yazma. Biçimler:
 
 KONULAR:
 ${t}`;
+function rvBlock(title,items){
+ if(!items||!items.length){const p=document.createElement('p');p.className='soon';p.textContent=title;return p}
+ const d=document.createElement('details');d.className='rv';d.innerHTML='<summary></summary><div class="in"></div>';d.querySelector('summary').textContent=title;
+ items.forEach(x=>{const p=document.createElement('p');p.className='soon';p.textContent=(x.ok?'✓ ':'✗ ')+x.q+(x.ok?'':'  Cevabın: '+x.a+'. Doğrusu: '+x.r+'.'+(x.e?' '+x.e:''));d.querySelector('.in').append(p)});
+ return d;
+}
 let QZ=null;
 async function renderQuiz(){
  const el=$('#qbox');QZ=null;
@@ -424,7 +471,7 @@ async function renderQuiz(){
  const fill=()=>{const b=books.find(x=>x.id===sel.value);$('#qt').innerHTML='';
   b.sum.slice().sort((x,y)=>x.page-y.page).forEach(s=>{const l=document.createElement('label');l.className='chk';l.innerHTML='<input type="checkbox" checked><span></span>';l.firstChild.dataset.k=b.sum.indexOf(s);l.querySelector('span').textContent=s.topic;$('#qt').append(l)});
   const h=(b.quiz||[]).slice(-3).reverse();$('#qhist').innerHTML=h.length?'<h2>Son sonuçların</h2>':'';
-  h.forEach(r=>{const p=document.createElement('p');p.className='soon';p.textContent=new Date(r.d).toLocaleDateString('tr-TR')+': '+r.s+' / '+r.n;$('#qhist').append(p)})};
+  h.forEach(r=>$('#qhist').append(rvBlock(new Date(r.d).toLocaleDateString('tr-TR')+': '+r.s+' / '+r.n,r.items)))};
  sel.onchange=fill;fill();
  $('#qgo').onclick=()=>startQuiz(books.find(x=>x.id===sel.value),+$('#qn').value);
 }
@@ -438,7 +485,7 @@ async function startQuiz(b,n){
   const qs=(Array.isArray(r)?r:[]).filter(x=>x&&x.q&&tops[x.t-1]&&((x.type==='open'&&x.model)||(x.type==='mc'&&Array.isArray(x.options)&&x.options.length===4&&x.answer>=0&&x.answer<4)));
   if(qs.length<2)throw{code:'json'};
   qs.forEach(x=>{x.topic=tops[x.t-1];if(x.type==='mc'){const c=x.options[x.answer],o=x.options.slice().sort(()=>Math.random()-.5);x.options=o;x.answer=o.indexOf(c)}});
-  QZ={b,qs,i:0,s:0,wrong:[]};showQ();
+  QZ={b,qs,i:0,s:0,wrong:[],log:[]};showQ();
  }catch(e){m.textContent=emsg(e);$('#qgo').disabled=false}
 }
 function showQ(){
@@ -451,14 +498,14 @@ function showQ(){
  if(q.type==='mc'){
   q.options.forEach((o,k)=>{const b=document.createElement('button');b.className='opt';b.textContent=o;
    b.onclick=()=>{const bs=$$('.opt');bs.forEach(x=>x.disabled=true);bs[q.answer].classList.add('ok');
-    if(k===q.answer)QZ.s++;else{b.classList.add('no');miss()}
+    QZ.log.push({q:q.q,ok:k===q.answer,a:q.options[k],r:q.options[q.answer],e:q.explain||''});if(k===q.answer)QZ.s++;else{b.classList.add('no');miss()}
     const p=document.createElement('p');p.textContent=q.explain||'';$('#qx').append(p);next()};
    $('#qa').append(b)});
  }else{
   $('#qa').innerHTML='<textarea id="qo" rows="4" placeholder="Cevabını kendi cümlelerinle yaz"></textarea>';
   const sh=document.createElement('button');sh.className='b';sh.textContent='Örnek cevabı göster';
   sh.onclick=()=>{sh.remove();$('#qo').disabled=true;const p=document.createElement('p');p.textContent='Örnek cevap: '+q.model;$('#qx').append(p);
-   [['Bildim',1],['Eksik kaldı',0]].forEach(([t,v])=>{const b=document.createElement('button');b.className='b';b.textContent=t;b.style.marginRight='8px';b.onclick=()=>{if(v)QZ.s++;else miss();QZ.i++;showQ()};$('#qx').append(b)})};
+   [['Bildim',1],['Eksik kaldı',0]].forEach(([t,v])=>{const b=document.createElement('button');b.className='b';b.textContent=t;b.style.marginRight='8px';b.onclick=()=>{QZ.log.push({q:q.q,ok:!!v,a:'(kendi cevabın)',r:q.model,e:''});if(v)QZ.s++;else miss();QZ.i++;showQ()};$('#qx').append(b)})};
   $('#qx').append(sh);
  }
 }
@@ -469,8 +516,8 @@ async function endQ(){
  const ws=[...new Set(wrong)];
  $('#qr').textContent=ws.length?'Şu konuları tekrar etmeni öneririm:':'Hepsini doğru yaptın, harika!';
  ws.forEach(t=>{const d=document.createElement('p'),bt=document.createElement('button');d.textContent=t.topic+' ';bt.className='lnk';bt.textContent='Kitapta göster (sayfa '+t.page+')';bt.onclick=()=>openBook(b.id,t.page);d.append(bt);$('#qw').append(d)});
- $('#qnew').onclick=()=>renderQuiz();
- try{const m=await get('books',b.id);m.quiz=(m.quiz||[]).concat([{d:Date.now(),s,n:qs.length}]).slice(-20);await put('books',m)}catch(e){}
+ $('#qnew').onclick=()=>renderQuiz();$('#qw').after(rvBlock('Cevaplarını incele',QZ.log));
+ try{const m=await get('books',b.id);m.quiz=(m.quiz||[]).concat([{d:Date.now(),s,n:qs.length,items:QZ.log}]).slice(-20);await put('books',m)}catch(e){}
 }
 
 /* PDF ekranı ve kalemler */
@@ -478,7 +525,7 @@ const PEN={ball:{c:'#1c1c1e',w:2,min:1,max:8},fountain:{c:'#1d4ed8',w:3,min:1,ma
 const TN=[['ball','Tükenmez'],['fountain','Dolma'],['pencil','Kurşun'],['marker','Keçeli'],['hl','Fosforlu'],['er','Silgi']];
 const COL=['#1c1c1e','#6b7280','#dc2626','#f97316','#facc15','#16a34a','#0ea5e9','#2563eb','#7c3aed','#ec4899'];
 let T='ball',cur,pdf,page=1,zoom=1,ink={},hist={},tok=0,task=null,cs=null,penSeen=false,chg=false;
-const pc=$('#pdfc'),hc=$('#hlc'),ic=$('#inkc'),lc=$('#livec');
+const pc=$('#pdfc'),hc=$('#hlc'),ic=$('#inkc'),lc=$('#livec');lc.getContext('2d',{desynchronized:true});
 
 function tools(){
  const el=$('#tools');el.innerHTML='';
@@ -498,15 +545,17 @@ function pop(show){
 $('#mode').onclick=()=>{const nav=$('#stage').classList.toggle('nav');$('#mode').textContent=nav?'Gezin':'Çizim';$('#mode').classList.toggle('on',!nav);pop(false)};
 $('#undo').onclick=()=>undo();$('#redo').onclick=()=>redo();
 $('#prev').onclick=()=>go(page-1);$('#next').onclick=()=>go(page+1);
-$('#zo').onclick=()=>{zoom=Math.max(.6,zoom/1.25);show()};$('#zi').onclick=()=>{zoom=Math.min(2.5,zoom*1.25);show()};
-$('#back').onclick=()=>{pop(false);document.body.classList.remove('reading');freePdf(pdf);pdf=null;task=null;renderLib()};
+$('#zo').onclick=()=>{zoom=Math.max(.5,zoom/1.25);show()};$('#zi').onclick=()=>{zoom=Math.min(3,zoom*1.25);show()};
+$('#fw').onclick=()=>{zoom=1;show()};
+$('#fp').onclick=async()=>{zoom=1;await show();const h=$('#wrap').offsetHeight,a=$('#stage').clientHeight-190;zoom=Math.max(.5,Math.min(1,a/h));show()};
+$('#back').onclick=async()=>{pop(false);await saving;if($('#sv').dataset.k==='2'&&!confirm('Son çizimler kaydedilemedi. Yine de çıkılsın mı?'))return;document.body.classList.remove('reading');freePdf(pdf);pdf=null;task=null;renderLib()};
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(pdf)show()},250)});
 
 async function openBook(id,pg){
  const [meta,file,rec]=await Promise.all([get('books',id),get('files',id),get('ink',id)]);
  pdf=await openPdf(file.data);file.data=null;
- cur=meta;ink=(rec&&rec.pages)||{};hist={};page=Math.min(pg||meta.last||1,pdf.numPages);zoom=1;
- $('#rtitle').textContent=meta.title;document.body.classList.add('reading');tools();show();
+ cur=meta;ink=(rec&&rec.pages)||{};hist={};page=Math.min(pg||meta.last||1,pdf.numPages);zoom=meta.zoom||1;
+ $('#rtitle').textContent=meta.title;document.body.classList.add('reading');tools();sv('');show();
 }
 function go(n){if(!pdf||n<1||n>pdf.numPages)return;page=n;$('#stage').scrollTop=0;show()}
 async function show(){
@@ -518,7 +567,7 @@ async function show(){
  drawAll();$('#pg').textContent=page+' / '+pdf.numPages;
  task=p.render({canvasContext:pc.getContext('2d'),viewport:rp});
  try{await task.promise}catch(e){return}
- cur.last=page;put('books',cur);
+ cur.last=page;cur.zoom=zoom;put('books',cur);
 }
 
 function line(x,q,W,H,o){
@@ -545,7 +594,10 @@ const snap=()=>{const h=H();h.u.push(JSON.stringify(ink[page]||[]));if(h.u.lengt
 function undo(){const h=H();if(!h.u.length)return;h.r.push(JSON.stringify(ink[page]||[]));ink[page]=JSON.parse(h.u.pop());drawAll();saveInk()}
 function redo(){const h=H();if(!h.r.length)return;h.u.push(JSON.stringify(ink[page]||[]));ink[page]=JSON.parse(h.r.pop());drawAll();saveInk()}
 let saving=Promise.resolve();
-const saveInk=()=>{saving=saving.then(()=>put('ink',{id:cur.id,pages:ink})).catch(()=>{})};
+const sv=(t,k)=>{const e=$('#sv');e.textContent=t;e.dataset.k=k||0};
+const saveInk=()=>{sv('Kaydediliyor…');saving=saving.then(()=>put('ink',{id:cur.id,pages:ink})).then(()=>sv('Kaydedildi'),e=>{sv('Kaydedilemedi, dokun',2);toast('Çizimler kaydedilemedi: '+((e&&(e.message||e.name))||e))})};
+$('#sv').onclick=()=>{if($('#sv').dataset.k==='2')saveInk()};
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&cur&&pdf)saveInk()});
 
 const pos=e=>{const r=lc.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height,e.pointerType==='pen'?(e.pressure||.5):.5]};
 function erase(q){
@@ -558,25 +610,47 @@ function erase(q){
  });
  if(c){ink[page]=N;chg=true;drawAll()}
 }
+let finger=true,ct='';
+const fb=()=>$('#fg').classList.toggle('on',finger);fb();
+$('#fg').onclick=()=>{finger=!finger;fb()};
+const tp=new Map();let pgz=null;
+function tdown(e){
+ lc.setPointerCapture(e.pointerId);tp.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(tp.size===2){const[a,b]=[...tp.values()],r=$('#wrap').getBoundingClientRect(),cx=(a.x+b.x)/2,cy=(a.y+b.y)/2;
+  pgz={d:Math.hypot(a.x-b.x,a.y-b.y)||1,s:1,cx,cy,fx:(cx-r.left)/r.width,fy:(cy-r.top)/r.height};
+  $('#wrap').style.transformOrigin=(pgz.fx*100)+'% '+(pgz.fy*100)+'%'}
+}
+function tmove(e){
+ const o=tp.get(e.pointerId);if(!o)return;const dx=e.clientX-o.x,dy=e.clientY-o.y;o.x=e.clientX;o.y=e.clientY;
+ if(tp.size===1){const st=$('#stage');st.scrollLeft-=dx;st.scrollTop-=dy}
+ else if(pgz&&tp.size===2){const[a,b]=[...tp.values()];pgz.s=Math.max(.4,Math.min(4,Math.hypot(a.x-b.x,a.y-b.y)/pgz.d));$('#wrap').style.transform='scale('+pgz.s+')'}
+}
+async function tup(e){
+ tp.delete(e.pointerId);
+ if(pgz&&tp.size<2){const g=pgz;pgz=null;$('#wrap').style.transform='';zoom=Math.max(.5,Math.min(3,zoom*g.s));await show();
+  const st=$('#stage'),w=$('#wrap').getBoundingClientRect();st.scrollLeft+=w.left+g.fx*w.width-g.cx;st.scrollTop+=w.top+g.fy*w.height-g.cy}
+}
 lc.onpointerdown=e=>{
- if(e.pointerType==='pen')penSeen=true;
- if(e.pointerType==='touch'&&penSeen)return;
- pop(false);lc.setPointerCapture(e.pointerId);snap();chg=false;
+ if(e.pointerType==='pen'&&!penSeen){penSeen=true;finger=false;fb()}
+ if(e.pointerType==='touch'&&(ct==='pen'||!finger)){if(!finger&&ct!=='pen')tdown(e);return}
+ pop(false);lc.setPointerCapture(e.pointerId);snap();chg=false;ct=e.pointerType;
  const q=pos(e),o=PEN[T];
  if(T==='er'){cs={er:1};erase(q);return}
  cs={t:T,c:o.c,w:o.w/1000,p:[q]};(ink[page]=ink[page]||[]).push(cs);chg=true;
  if(T==='hl')drawAll();else live();
 };
 lc.onpointermove=e=>{
- if(!cs)return;
+ if(e.pointerType==='touch'&&!finger){if(ct!=='pen')tmove(e);return}
+ if(!cs||(e.pointerType==='touch'&&ct==='pen'))return;
  for(const ev of(e.getCoalescedEvents?e.getCoalescedEvents():[e])){const q=pos(ev);if(cs.er)erase(q);else cs.p.push(q)}
  if(!cs.er){if(cs.t==='hl')drawAll();else live()}
 };
-lc.onpointerup=lc.onpointercancel=()=>{
+lc.onpointerup=lc.onpointercancel=e=>{
+ if(e&&e.pointerType==='touch'&&!finger){tup(e);return}
  if(!cs)return;
  if(cs.er){if(!chg)H().u.pop()}
  else{if(cs.t!=='hl')paint(ic.getContext('2d'),cs);lc.getContext('2d').clearRect(0,0,lc.width,lc.height)}
- cs=null;if(chg)saveInk();
+ cs=null;ct='';if(chg)saveInk();
 };
 
 (async()=>{
