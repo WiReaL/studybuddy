@@ -136,6 +136,8 @@ input[type=range]{height:32px}
 details.rv>summary{padding:10px 0;font-weight:600;font-size:15px;color:var(--ac)}
 @media (max-width:900px) and (min-width:761px){#side{width:78px;padding:14px 6px}#side .logo{display:none}#side button{flex-direction:column;gap:4px;font-size:11px;padding:10px 4px;align-items:center;justify-content:center}}
 @media (max-width:760px){#side{border-right:0;border-top:1px solid var(--gb);padding:4px}main{padding:16px 14px 20px}}
+.act.sec{background:var(--ph);color:var(--tx);margin-top:6px}
+#stage{padding-bottom:30px;touch-action:pan-x pan-y}
 </style>
 </head>
 <body>
@@ -161,8 +163,9 @@ details.rv>summary{padding:10px 0;font-weight:600;font-size:15px;color:var(--ac)
     <div class="row"><button class="b" id="gshow">Göster</button><button class="b p" id="gsave">Kaydet ve test et</button></div>
     <p id="gmsg" class="soon"></p></div>
    <div class="card glass"><h3>Görünüm</h3><div class="seg" id="thm"><button data-t="system">Sistem</button><button data-t="light">Açık</button><button data-t="dark">Koyu</button></div></div>
+   <div class="card glass" id="inkcard" hidden><h3>Eski çizimler</h3><p class="soon" id="inkinfo"></p><div class="row"><button class="b" id="inkdel">Eski çizimleri sil</button></div></div>
    <div class="card glass"><h3>Yedek</h3>
-    <p class="soon"><b>Hafif yedek:</b> çizimlerini, özetlerini ve quiz sonuçlarını küçük bir dosyaya alır. PDF’ler dahil değildir, bu yüzden cihazın belleğini zorlamaz. En güvenli yol budur.</p>
+    <p class="soon"><b>Hafif yedek:</b> özetlerini ve quiz sonuçlarını küçük bir dosyaya alır. PDF’ler dahil değildir, bu yüzden cihazın belleğini zorlamaz. En güvenli yol budur.</p>
     <div class="row"><button class="b p" id="bk">Hafif yedek al</button><button class="b" id="rs">Yedeği yükle</button></div>
     <p class="soon"><b>Kitap yedeği:</b> bir kitabı PDF’iyle birlikte tek zip dosyasına koyar. Büyük kitaplarda cihazı zorlayabilir, bu yüzden her seferinde tek kitap yedeklenir.</p>
     <div id="bklist"></div>
@@ -174,13 +177,13 @@ details.rv>summary{padding:10px 0;font-weight:600;font-size:15px;color:var(--ac)
 
 <div id="reader">
  <div id="bar" class="glass">
-  <button class="b" id="back">‹ Kütüphane</button><span id="rtitle"></span><button id="sv" aria-live="polite"></button><span class="sp"></span>
-  <button class="b" id="prev">‹</button><span id="pg"></span><button class="b" id="next">›</button>
-  <button class="b" id="zo" aria-label="Uzaklaştır">−</button><button class="b" id="zi" aria-label="Yakınlaştır">+</button><button class="b" id="fw" title="Genişliğe sığdır">Genişlik</button><button class="b" id="fp" title="Sayfaya sığdır">Sayfa</button><button class="b" id="rth">◐</button>
+  <button class="b" id="back">‹ Kütüphane</button><span id="rtitle"></span><span class="sp"></span>
+  <button class="b" id="prev" aria-label="Önceki sayfa">‹</button><span id="pg"></span><button class="b" id="next" aria-label="Sonraki sayfa">›</button>
+  <button class="b" id="zo" aria-label="Uzaklaştır">−</button><button class="b" id="zi" aria-label="Yakınlaştır">+</button>
+  <button class="b" id="fw" title="Genişliğe sığdır">Genişlik</button><button class="b" id="fp" title="Sayfaya sığdır">Sayfa</button>
+  <button class="b" id="ext">Başka uygulamada aç</button><button class="b" id="rth" aria-label="Açık / koyu tema">◐</button>
  </div>
- <div id="stage"><div id="wrap"><canvas id="pdfc"></canvas><canvas id="hlc"></canvas><canvas id="inkc"></canvas><canvas id="livec"></canvas></div></div>
- <div id="pop" class="glass" hidden></div>
- <div id="tb" class="glass"><div id="tools"></div><span class="sep"></span><button class="b" id="undo" title="Geri al">↶</button><button class="b" id="redo" title="İleri al">↷</button><span class="sep"></span><button class="b on" id="fg" title="Parmakla çizim">Parmak</button><button class="b on" id="mode">Çizim</button></div>
+ <div id="stage"><div id="wrap"><canvas id="pdfc"></canvas></div></div>
 </div>
 
 <dialog id="dlg">
@@ -249,11 +252,12 @@ async function renderLib(){
   const h=document.createElement('h2');h.textContent=c;el.append(h);
   const gr=document.createElement('div');gr.className='grid';
   g[c].forEach(b=>{const d=document.createElement('div');d.className='book';
-   d.innerHTML='<div class="cover"><b></b><small></small></div><button class="del" title="Sil">✕</button><button class="act"></button>';
+   d.innerHTML='<div class="cover"><b></b><small></small></div><button class="del" title="Sil">✕</button><button class="act"></button><button class="act sec"></button>';
    d.firstChild.style.setProperty('--h',hue(b.course));
    d.querySelector('b').textContent=b.title;d.querySelector('small').textContent=b.pages+' sayfa';
    d.onclick=()=>openBook(b.id);
    const ab=d.querySelector('.act');ab.textContent=b.sum?'Özeti yenile':'Özet çıkar';ab.onclick=e=>{e.stopPropagation();summarize(b.id)};
+   const ob=d.querySelectorAll('.act')[1];ob.textContent='Başka uygulamada aç';ob.onclick=e=>{e.stopPropagation();sendPdf(b.id)};
    d.querySelector('.del').onclick=async e=>{e.stopPropagation();if(confirm('“'+b.title+'” ve üstündeki tüm çizimler silinsin mi?')){await del('books',b.id);await del('files',b.id);await del('ink',b.id);renderLib()}};
    gr.append(d)});
   el.append(gr)});
@@ -308,6 +312,8 @@ async function gem(parts,signal){
 /* Ayarlar + yedek */
 async function loadSet(){
  $('#gk').value=cfg().k;$('#gm').value=cfg().m;$('#gmsg').textContent='';$('#bkmsg').textContent='';loadBk();lastBk();$('#ver').textContent='Sürüm: '+VER;
+ try{const ik=await all('ink'),n=ik.filter(r=>r.pages&&Object.values(r.pages).some(x=>x&&x.length)).length;
+  $('#inkcard').hidden=!n;if(n)$('#inkinfo').textContent=n+' kitapta eski çizim verisi duruyor. Artık gösterilmiyor. İstersen kalıcı olarak silebilirsin, bu geri alınamaz.'}catch(e){}
  try{const e=await navigator.storage.estimate(),p=await navigator.storage.persisted();$('#stor').textContent='Kullanılan alan: '+Math.round(e.usage/1048576)+' MB. Kalıcı saklama: '+(p?'açık.':'kapalı, tarayıcı alan darlığında verileri silebilir. Düzenli yedek al.')}catch(e){}
 }
 $('#gshow').onclick=()=>{const i=$('#gk');i.type=i.type==='password'?'text':'password';$('#gshow').textContent=i.type==='password'?'Göster':'Gizle'};
@@ -316,7 +322,7 @@ $('#gsave').onclick=async()=>{
  const m=$('#gmsg');m.textContent='Test ediliyor…';
  try{await gem([{text:'Sadece {"ok":true} JSON nesnesini döndür.'}]);m.textContent='Bağlantı çalışıyor. Model: '+cfg().m;$('#gm').value=cfg().m}catch(e){m.textContent=emsg(e)}
 };
-const VER='2026-11-08-f';
+const VER='2026-11-09-g';
 const day=()=>new Date().toISOString().slice(0,10);
 function ready(b,n){
  const m=$('#bkmsg');m.textContent='Dosya hazır: '+n+' ';
@@ -333,15 +339,15 @@ function ready(b,n){
 const lastBk=()=>{const e=$('#lastbk');if(e)e.textContent=ls('sb-lastbk')?'Son yedek: '+ls('sb-lastbk'):'Henüz yedek alınmadı.'};
 async function lightBackup(){
  const m=$('#bkmsg');m.textContent='Hazırlanıyor…';
- try{const books=await all('books'),inks=await all('ink');
-  ready(new Blob([JSON.stringify({v:2,light:true,books,ink:inks})],{type:'application/json'}),'studybuddy-hafif-yedek-'+day()+'.json')}
+ try{const books=await all('books');
+  ready(new Blob([JSON.stringify({v:2,light:true,books})],{type:'application/json'}),'studybuddy-hafif-yedek-'+day()+'.json')}
  catch(e){m.textContent='Yedek alınamadı. Tekrar dene.'}
 }
 async function bookBackup(b){
  const m=$('#bkmsg');m.textContent='“'+b.title+'” hazırlanıyor… Bu biraz sürebilir, sayfadan çıkma.';
  try{
-  const z=new JSZip(),f=await get('files',b.id),ik=await get('ink',b.id);
-  z.file('data.json',JSON.stringify({v:1,books:[b],ink:ik?[ik]:[]}));z.file('pdf/'+b.id+'.pdf',f.data);f.data=null;
+  const z=new JSZip(),f=await get('files',b.id);
+  z.file('data.json',JSON.stringify({v:2,books:[b]}));z.file('pdf/'+b.id+'.pdf',f.data);f.data=null;
   ready(await z.generateAsync({type:'blob',compression:'STORE'}),'studybuddy-kitap-'+day()+'.zip');
  }catch(e){m.textContent='Bu kitap yedeklenemedi, bellek yetmemiş olabilir. Hafif yedeği dene. '+((e&&e.message)||'')}
 }
@@ -361,13 +367,12 @@ async function restore(f){
   const match=b=>cur.find(x=>x.id===b.id)||(light?cur.find(x=>x.title===b.title&&x.pages===b.pages):null);
   const items=d.books.filter(b=>light||z.file('pdf/'+b.id+'.pdf')),hit=items.filter(match).length;
   if(!items.length){m.textContent='Bu yedekte geri yüklenecek kitap bulunamadı. Hiçbir şey değişmedi.';return}
-  if(hit&&!confirm(hit+' kitabın çizim ve özetleri yedektekilerle değiştirilecek. Devam edilsin mi?')){m.textContent='İptal edildi. Hiçbir şey değişmedi.';return}
+  if(hit&&!confirm(hit+' kitabın özet ve quiz sonuçları yedektekilerle değiştirilecek. Devam edilsin mi?')){m.textContent='İptal edildi. Hiçbir şey değişmedi.';return}
   m.textContent='Yedek yükleniyor…';let n=0,no=0;
   for(const b of items){
-   const k=(d.ink||[]).find(x=>x.id===b.id);
    if(light){const t=match(b);if(!t){no++;continue}
-    if(b.sum)t.sum=b.sum;if(b.quiz)t.quiz=b.quiz;await put('books',t);if(k)await put('ink',{id:t.id,pages:k.pages})}
-   else{await put('files',{id:b.id,data:await z.file('pdf/'+b.id+'.pdf').async('blob')});await put('books',b);if(k)await put('ink',k)}
+    if(b.sum)t.sum=b.sum;if(b.quiz)t.quiz=b.quiz;await put('books',t)}
+   else{await put('files',{id:b.id,data:await z.file('pdf/'+b.id+'.pdf').async('blob')});await put('books',b)}
    n++;
   }
   m.textContent=n+' kitap geri yüklendi.'+(no?' '+no+' kitap için aynı PDF kütüphanede yok, önce o PDF’i ekleyip yedeği tekrar yükle.':'');renderLib();
@@ -520,137 +525,72 @@ async function endQ(){
  try{const m=await get('books',b.id);m.quiz=(m.quiz||[]).concat([{d:Date.now(),s,n:qs.length,items:QZ.log}]).slice(-20);await put('books',m)}catch(e){}
 }
 
-/* PDF ekranı ve kalemler */
-const PEN={ball:{c:'#1c1c1e',w:2,min:1,max:8},fountain:{c:'#1d4ed8',w:3,min:1,max:10},pencil:{c:'#3a3a3c',w:2.5,min:1,max:8},marker:{c:'#e11d48',w:7,min:3,max:20},hl:{c:'#fde047',w:16,min:8,max:40},er:{w:14,min:4,max:40,mode:'obj'}};
-const TN=[['ball','Tükenmez'],['fountain','Dolma'],['pencil','Kurşun'],['marker','Keçeli'],['hl','Fosforlu'],['er','Silgi']];
-const COL=['#1c1c1e','#6b7280','#dc2626','#f97316','#facc15','#16a34a','#0ea5e9','#2563eb','#7c3aed','#ec4899'];
-let T='ball',cur,pdf,page=1,zoom=1,ink={},hist={},tok=0,task=null,cs=null,penSeen=false,chg=false;
-const pc=$('#pdfc'),hc=$('#hlc'),ic=$('#inkc'),lc=$('#livec');lc.getContext('2d',{desynchronized:true});
-
-function tools(){
- const el=$('#tools');el.innerHTML='';
- TN.forEach(([k,n])=>{const b=document.createElement('button');b.className='tl'+(k===T?' on':'');b.innerHTML='<i></i>'+n;
-  if(k==='er')b.firstChild.style.display='none';else b.firstChild.style.background=PEN[k].c;
-  b.onclick=()=>{if(T===k)pop($('#pop').hidden);else{T=k;pop(false);tools()}};el.append(b)});
-}
-function pop(show){
- const p=$('#pop');if(!show){p.hidden=true;return}
- const o=PEN[T];p.hidden=false;
- p.innerHTML=(T==='er'?'<div class="seg" id="em"><button data-m="obj">Nesne silgisi</button><button data-m="pix">Piksel silgisi</button></div>':'<div class="sws"></div>')+'<label>Kalınlık<input type="range" id="rg" min="'+o.min+'" max="'+o.max+'" step=".5" value="'+o.w+'"></label>';
- if(T==='er')$$('#em button').forEach(b=>{b.classList.toggle('on',b.dataset.m===o.mode);b.onclick=()=>{o.mode=b.dataset.m;pop(true)}});
- else{const s=p.querySelector('.sws');COL.forEach(c=>{const b=document.createElement('button');b.className='sw'+(c===o.c?' on':'');b.style.background=c;b.onclick=()=>{o.c=c;pop(true);tools()};s.append(b)});
-  const ci=document.createElement('input');ci.type='color';ci.value=o.c;ci.oninput=()=>{o.c=ci.value;tools()};s.append(ci)}
- $('#rg').oninput=e=>{o.w=+e.target.value};
-}
-$('#mode').onclick=()=>{const nav=$('#stage').classList.toggle('nav');$('#mode').textContent=nav?'Gezin':'Çizim';$('#mode').classList.toggle('on',!nav);pop(false)};
-$('#undo').onclick=()=>undo();$('#redo').onclick=()=>redo();
+/* PDF okuma (çizim yok) */
+let cur,pdf,page=1,zoom=1,tok=0,task=null;
+const pc=$('#pdfc'),stg=$('#stage');
 $('#prev').onclick=()=>go(page-1);$('#next').onclick=()=>go(page+1);
 $('#zo').onclick=()=>{zoom=Math.max(.5,zoom/1.25);show()};$('#zi').onclick=()=>{zoom=Math.min(3,zoom*1.25);show()};
 $('#fw').onclick=()=>{zoom=1;show()};
-$('#fp').onclick=async()=>{zoom=1;await show();const h=$('#wrap').offsetHeight,a=$('#stage').clientHeight-190;zoom=Math.max(.5,Math.min(1,a/h));show()};
-$('#back').onclick=async()=>{pop(false);await saving;if($('#sv').dataset.k==='2'&&!confirm('Son çizimler kaydedilemedi. Yine de çıkılsın mı?'))return;document.body.classList.remove('reading');freePdf(pdf);pdf=null;task=null;renderLib()};
+$('#fp').onclick=async()=>{zoom=1;await show();const h=$('#wrap').offsetHeight,a=stg.clientHeight-100;zoom=Math.max(.5,Math.min(1,a/h));show()};
+$('#back').onclick=()=>{document.body.classList.remove('reading');freePdf(pdf);pdf=null;task=null;renderLib()};
+$('#ext').onclick=()=>{if(cur)sendPdf(cur.id)};
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(pdf)show()},250)});
 
 async function openBook(id,pg){
- const [meta,file,rec]=await Promise.all([get('books',id),get('files',id),get('ink',id)]);
+ const [meta,file]=await Promise.all([get('books',id),get('files',id)]);
  pdf=await openPdf(file.data);file.data=null;
- cur=meta;ink=(rec&&rec.pages)||{};hist={};page=Math.min(pg||meta.last||1,pdf.numPages);zoom=meta.zoom||1;
- $('#rtitle').textContent=meta.title;document.body.classList.add('reading');tools();sv('');show();
+ cur=meta;page=Math.min(pg||meta.last||1,pdf.numPages);zoom=meta.zoom||1;
+ $('#rtitle').textContent=meta.title;document.body.classList.add('reading');show();
 }
-function go(n){if(!pdf||n<1||n>pdf.numPages)return;page=n;$('#stage').scrollTop=0;show()}
+function go(n){if(!pdf||n<1||n>pdf.numPages)return;page=n;stg.scrollTop=0;show()}
 async function show(){
  const my=++tok;if(task){task.cancel();try{await task.promise}catch(e){}}
  const p=await pdf.getPage(page);if(my!==tok)return;
- const w=Math.max(200,$('#stage').clientWidth-24)*zoom,sc=w/p.getViewport({scale:1}).width,vp=p.getViewport({scale:sc}),d=Math.min(devicePixelRatio||1,2,Math.sqrt(5e6/(vp.width*vp.height))),rp=p.getViewport({scale:sc*d});
- [pc,hc,ic,lc].forEach(c=>{c.width=Math.round(rp.width);c.height=Math.round(rp.height);c.style.width=vp.width+'px';c.style.height=vp.height+'px'});
+ const w=Math.max(200,stg.clientWidth-24)*zoom,sc=w/p.getViewport({scale:1}).width,vp=p.getViewport({scale:sc}),d=Math.min(devicePixelRatio||1,2,Math.sqrt(5e6/(vp.width*vp.height))),rp=p.getViewport({scale:sc*d});
+ pc.width=Math.round(rp.width);pc.height=Math.round(rp.height);pc.style.width=vp.width+'px';pc.style.height=vp.height+'px';
  $('#wrap').style.width=vp.width+'px';$('#wrap').style.height=vp.height+'px';
- drawAll();$('#pg').textContent=page+' / '+pdf.numPages;
+ $('#pg').textContent=page+' / '+pdf.numPages;
  task=p.render({canvasContext:pc.getContext('2d'),viewport:rp});
  try{await task.promise}catch(e){return}
- cur.last=page;cur.zoom=zoom;put('books',cur);
+ const id=cur.id,pn=page,z=zoom;
+ get('books',id).then(m=>{if(m){m.last=pn;m.zoom=z;return put('books',m)}}).catch(()=>{});
 }
 
-function line(x,q,W,H,o){
- x.beginPath();x.moveTo(q[0][0]*W+o,q[0][1]*H+o);
- if(q.length===1)x.lineTo(q[0][0]*W+o+.1,q[0][1]*H+o);
- else if(q.length<3)for(let i=1;i<q.length;i++)x.lineTo(q[i][0]*W+o,q[i][1]*H+o);
- else{for(let i=1;i<q.length-1;i++)x.quadraticCurveTo(q[i][0]*W+o,q[i][1]*H+o,(q[i][0]+q[i+1][0])/2*W+o,(q[i][1]+q[i+1][1])/2*H+o);x.lineTo(q[q.length-1][0]*W+o,q[q.length-1][1]*H+o)}
- x.stroke();
-}
-function paint(x,s){
- const q=s.p,W=x.canvas.width,H=x.canvas.height;if(!q||!q.length)return;
- const t=s.t==='pen'?'ball':s.t,w=s.w*W;
- x.save();x.lineCap=x.lineJoin='round';x.strokeStyle=s.c;
- if(t==='fountain'){for(let i=0;i<q.length;i++){const a=q[Math.max(0,i-1)],b=q[i],pr=((a[2]??.5)+(b[2]??.5))/2;x.lineWidth=w*(.3+pr*1.4);x.beginPath();x.moveTo(a[0]*W,a[1]*H);x.lineTo(b[0]*W+(i?0:.1),b[1]*H);x.stroke()}}
- else if(t==='pencil'){x.globalAlpha=.5;x.lineWidth=w;line(x,q,W,H,0);x.globalAlpha=.32;x.lineWidth=w*.5;line(x,q,W,H,.45)}
- else{x.globalAlpha=t==='marker'?.72:1;x.lineWidth=w;line(x,q,W,H,0)}
- x.restore();
-}
-function drawAll(){[hc,ic,lc].forEach(c=>c.getContext('2d').clearRect(0,0,c.width,c.height));(ink[page]||[]).forEach(s=>paint((s.t==='hl'?hc:ic).getContext('2d'),s))}
-function live(){const x=lc.getContext('2d');x.clearRect(0,0,lc.width,lc.height);paint(x,cs)}
+/* İki parmakla yakınlaştırma */
+let pz=null;
+const td=e=>Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY)||1;
+stg.addEventListener('touchstart',e=>{
+ if(e.touches.length!==2||!pdf)return;
+ const r=$('#wrap').getBoundingClientRect(),cx=(e.touches[0].clientX+e.touches[1].clientX)/2,cy=(e.touches[0].clientY+e.touches[1].clientY)/2;
+ pz={d:td(e),s:1,cx,cy,fx:(cx-r.left)/r.width,fy:(cy-r.top)/r.height};
+ $('#wrap').style.transformOrigin=(pz.fx*100)+'% '+(pz.fy*100)+'%';
+},{passive:true});
+stg.addEventListener('touchmove',e=>{
+ if(!pz||e.touches.length!==2)return;e.preventDefault();
+ pz.s=Math.max(.4,Math.min(4,td(e)/pz.d));$('#wrap').style.transform='scale('+pz.s+')';
+},{passive:false});
+stg.addEventListener('touchend',async e=>{
+ if(!pz||e.touches.length>=2)return;
+ const g=pz;pz=null;$('#wrap').style.transform='';zoom=Math.max(.5,Math.min(3,zoom*g.s));await show();
+ const w=$('#wrap').getBoundingClientRect();stg.scrollLeft+=w.left+g.fx*w.width-g.cx;stg.scrollTop+=w.top+g.fy*w.height-g.cy;
+});
+stg.addEventListener('touchcancel',()=>{pz=null;$('#wrap').style.transform=''});
 
-const H=()=>hist[page]||(hist[page]={u:[],r:[]});
-const snap=()=>{const h=H();h.u.push(JSON.stringify(ink[page]||[]));if(h.u.length>60)h.u.shift();h.r=[]};
-function undo(){const h=H();if(!h.u.length)return;h.r.push(JSON.stringify(ink[page]||[]));ink[page]=JSON.parse(h.u.pop());drawAll();saveInk()}
-function redo(){const h=H();if(!h.r.length)return;h.u.push(JSON.stringify(ink[page]||[]));ink[page]=JSON.parse(h.r.pop());drawAll();saveInk()}
-let saving=Promise.resolve();
-const sv=(t,k)=>{const e=$('#sv');e.textContent=t;e.dataset.k=k||0};
-const saveInk=()=>{sv('Kaydediliyor…');saving=saving.then(()=>put('ink',{id:cur.id,pages:ink})).then(()=>sv('Kaydedildi'),e=>{sv('Kaydedilemedi, dokun',2);toast('Çizimler kaydedilemedi: '+((e&&(e.message||e.name))||e))})};
-$('#sv').onclick=()=>{if($('#sv').dataset.k==='2')saveInk()};
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&cur&&pdf)saveInk()});
-
-const pos=e=>{const r=lc.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height,e.pointerType==='pen'?(e.pressure||.5):.5]};
-function erase(q){
- const o=PEN.er,a=ic.height/ic.width,r=o.w/1000*1.2,N=[];let c=false;
- const hit=p=>Math.hypot(p[0]-q[0],(p[1]-q[1])*a)<r;
- (ink[page]||[]).forEach(s=>{
-  if(!s.p.some(hit)){N.push(s);return}
-  c=true;if(o.mode==='obj')return;
-  let g=[];s.p.forEach(p=>{if(hit(p)){if(g.length)N.push({...s,p:g});g=[]}else g.push(p)});if(g.length)N.push({...s,p:g});
- });
- if(c){ink[page]=N;chg=true;drawAll()}
+/* Başka uygulamada aç (Paylaş menüsü) */
+async function sendPdf(id){
+ try{
+  const meta=await get('books',id),file=await get('files',id);
+  const name=(meta.title.replace(/[\\/:*?"<>|]+/g,' ').trim()||'kitap')+'.pdf',f=new File([file.data],name,{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+   try{await navigator.share({files:[f],title:meta.title});return}catch(e){if(e&&e.name==='AbortError')return}
+  }
+  const u=URL.createObjectURL(f),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);
+  toast('Paylaşım menüsü bu cihazda açılamadı, PDF indirildi. Samsung Notes’ta “PDF içe aktar” ile açabilirsin.');
+ }catch(e){toast('PDF gönderilemedi: '+((e&&e.message)||e))}
 }
-let finger=true,ct='';
-const fb=()=>$('#fg').classList.toggle('on',finger);fb();
-$('#fg').onclick=()=>{finger=!finger;fb()};
-const tp=new Map();let pgz=null;
-function tdown(e){
- lc.setPointerCapture(e.pointerId);tp.set(e.pointerId,{x:e.clientX,y:e.clientY});
- if(tp.size===2){const[a,b]=[...tp.values()],r=$('#wrap').getBoundingClientRect(),cx=(a.x+b.x)/2,cy=(a.y+b.y)/2;
-  pgz={d:Math.hypot(a.x-b.x,a.y-b.y)||1,s:1,cx,cy,fx:(cx-r.left)/r.width,fy:(cy-r.top)/r.height};
-  $('#wrap').style.transformOrigin=(pgz.fx*100)+'% '+(pgz.fy*100)+'%'}
-}
-function tmove(e){
- const o=tp.get(e.pointerId);if(!o)return;const dx=e.clientX-o.x,dy=e.clientY-o.y;o.x=e.clientX;o.y=e.clientY;
- if(tp.size===1){const st=$('#stage');st.scrollLeft-=dx;st.scrollTop-=dy}
- else if(pgz&&tp.size===2){const[a,b]=[...tp.values()];pgz.s=Math.max(.4,Math.min(4,Math.hypot(a.x-b.x,a.y-b.y)/pgz.d));$('#wrap').style.transform='scale('+pgz.s+')'}
-}
-async function tup(e){
- tp.delete(e.pointerId);
- if(pgz&&tp.size<2){const g=pgz;pgz=null;$('#wrap').style.transform='';zoom=Math.max(.5,Math.min(3,zoom*g.s));await show();
-  const st=$('#stage'),w=$('#wrap').getBoundingClientRect();st.scrollLeft+=w.left+g.fx*w.width-g.cx;st.scrollTop+=w.top+g.fy*w.height-g.cy}
-}
-lc.onpointerdown=e=>{
- if(e.pointerType==='pen'&&!penSeen){penSeen=true;finger=false;fb()}
- if(e.pointerType==='touch'&&(ct==='pen'||!finger)){if(!finger&&ct!=='pen')tdown(e);return}
- pop(false);lc.setPointerCapture(e.pointerId);snap();chg=false;ct=e.pointerType;
- const q=pos(e),o=PEN[T];
- if(T==='er'){cs={er:1};erase(q);return}
- cs={t:T,c:o.c,w:o.w/1000,p:[q]};(ink[page]=ink[page]||[]).push(cs);chg=true;
- if(T==='hl')drawAll();else live();
-};
-lc.onpointermove=e=>{
- if(e.pointerType==='touch'&&!finger){if(ct!=='pen')tmove(e);return}
- if(!cs||(e.pointerType==='touch'&&ct==='pen'))return;
- for(const ev of(e.getCoalescedEvents?e.getCoalescedEvents():[e])){const q=pos(ev);if(cs.er)erase(q);else cs.p.push(q)}
- if(!cs.er){if(cs.t==='hl')drawAll();else live()}
-};
-lc.onpointerup=lc.onpointercancel=e=>{
- if(e&&e.pointerType==='touch'&&!finger){tup(e);return}
- if(!cs)return;
- if(cs.er){if(!chg)H().u.pop()}
- else{if(cs.t!=='hl')paint(ic.getContext('2d'),cs);lc.getContext('2d').clearRect(0,0,lc.width,lc.height)}
- cs=null;ct='';if(chg)saveInk();
+$('#inkdel').onclick=async()=>{
+ if(!confirm('Tüm eski çizim verileri kalıcı olarak silinecek. Kitapların ve özetlerin etkilenmez. Geri alınamaz. Devam edilsin mi?'))return;
+ try{await tx('ink','readwrite',o=>o.clear());$('#inkcard').hidden=true;toast('Eski çizimler silindi.')}catch(e){toast('Silinemedi: '+((e&&e.message)||e))}
 };
 
 (async()=>{

@@ -1,7 +1,7 @@
 {
  "name": "StudyBuddy",
  "short_name": "StudyBuddy",
- "description": "PDF kitaplarını oku, not al, özet ve quiz çıkar",
+ "description": "PDF kitaplarından özet ve quiz çıkar",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
